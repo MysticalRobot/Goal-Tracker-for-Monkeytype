@@ -3,13 +3,13 @@ import { getIntervalManager } from '../utils.ts';
 // gets the colors that the current Monkeytype tab is using
 const getTheme = (() => {
   // although the theme may change, this reference will not change
-  const root_style = window.getComputedStyle(document.documentElement);
+  const rootStyle = window.getComputedStyle(document.documentElement);
   return (): Theme => ({
-    mainColor: root_style.getPropertyValue('--main-color').substring(1),
-    bgColor: root_style.getPropertyValue('--bg-color').substring(1),
-    subColor: root_style.getPropertyValue('--sub-color').substring(1),
-    textColor: root_style.getPropertyValue('--text-color').substring(1),
-    errorColor: root_style.getPropertyValue('--error-color').substring(1)
+    mainColor: rootStyle.getPropertyValue('--main-color').substring(1),
+    bgColor: rootStyle.getPropertyValue('--bg-color').substring(1),
+    subColor: rootStyle.getPropertyValue('--sub-color').substring(1),
+    textColor: rootStyle.getPropertyValue('--text-color').substring(1),
+    errorColor: rootStyle.getPropertyValue('--error-color').substring(1)
   })
 })();
 
@@ -40,8 +40,9 @@ const updateIcon = (() => {
 
 // periodically updates the icon as needed while the current tab is active 
 const oneSecond = 1000;
-document.addEventListener('visibilitychange',
-  getIntervalManager(updateIcon, oneSecond, 'updateIcon'));
+const intervalManager = getIntervalManager(updateIcon, oneSecond, 'updateIcon');
+document.addEventListener('visibilitychange', intervalManager);
+intervalManager();
 
 // update the icon upon the addition or removal of stylesheets from the document's body 
 const observer = new MutationObserver(updateIcon);

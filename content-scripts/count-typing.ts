@@ -23,7 +23,10 @@ function createTimingCallbacks(): [() => void, () => void] {
     }
     const message: SaveTimeTypingMessage = {
       action: 'saveTimeTyping',
-      timeTypingSeconds
+      timeTyping: {
+        date: new Date(),
+        seconds: timeTypingSeconds
+      }
     };
     console.debug('sending SaveTimeTypingMessage');
     const response: MessageResponse = await browser.runtime.sendMessage(message);
@@ -44,6 +47,8 @@ if (wordsInput !== null) {
   wordsInput.addEventListener('focusout', saveTimeTyping);
   // periodically save the time spent timing when the tab is active
   const tenSecondsInMS = 10000;
-  document.addEventListener('visibilitychange',
-    getIntervalManager(saveTimeTyping, tenSecondsInMS, 'saveTimeTyping'));
+  const intervalManager
+    = getIntervalManager(saveTimeTyping, tenSecondsInMS, 'saveTimeTyping');
+  document.addEventListener('visibilitychange', intervalManager);
+  intervalManager();
 }

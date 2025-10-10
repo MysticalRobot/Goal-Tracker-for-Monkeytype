@@ -1,24 +1,24 @@
 :root {
-  /* color-scheme: light dark; */
-  /**/
-  /* --light-bg: #eeeeee; */
-  /* --light-color: #333333; */
-  /* --light-code: gold; */
-  /* --light-hover: gold; */
-  /**/
-  /* --dark-bg: #333333; */
-  /* --dark-color: #eeeeee; */
-  /* --dark-code: gold; */
-  /* --dark-hover: gold; */
+  font-family: "Roboto";
+  /* used for sub text */
+  --main-color: #e2b714;
+  /* used for bg  */
+  --bg-color: #323437;
+  /* used for main text */
+  --sub-color: #646669;
+  /* maybe use for valid forms  */
+  --text-color: #d1d0c5;
+  /* maybe use for invalid forms  */
+  --error-color: #ca4754;
 }
 
 * {
-  /* background-color: light-dark(light-bg, dark-bg); */
-  /* color: light-dark(light-color, dark-color); */
+  background-color: var(--bg-color);
+  color: var(--sub-color);
 }
 
 body {
-  width: 400px;
+  width: 300px;
   height: 200px;
 }
 
@@ -37,14 +37,16 @@ body {
 
 #dayInputs {
   display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-row-gap: 0.5rem;
 }
 
-#dayInputs>:nth-child(odd) {
-  grid-column: 1;
+#inputZone:hover {
+  border: 2px solid red;
 }
 
-#dayInputs>:nth-child(even) {
-  grid-column: 2;
+#inputZone:hover {
+  border: 2px solid red;
 }
 
 input:invalid {
@@ -52,6 +54,10 @@ input:invalid {
   border: none;
   outline: 2px solid red;
   border-radius: 5px;
+}
+
+label {
+  margin-right: 0.25rem;
 }
 
 img {
