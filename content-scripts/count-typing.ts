@@ -21,14 +21,17 @@ function createTimingCallbacks(): [() => void, () => void] {
     if (timeTypingSeconds === 0) {
       return;
     }
+    // TODO maybe try to overestimate a little so that if people do 1 60s test,
+    // they actually hit their goal of 1 min
+    const timeTypingMinutes = timeTypingSeconds / 60;
     const message: SaveTimeTypingMessage = {
       action: 'saveTimeTyping',
       timeTyping: {
         date: new Date(),
-        seconds: timeTypingSeconds
+        minutes: timeTypingMinutes
       }
     };
-    console.debug('sending SaveTimeTypingMessage');
+    console.debug(`sending SaveTimeTypingMessage to save ${timeTypingMinutes} minutes`);
     const response: MessageResponse = await browser.runtime.sendMessage(message);
     if (response.success) {
       console.debug(response.message);

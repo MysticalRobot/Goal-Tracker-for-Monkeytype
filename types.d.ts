@@ -1,3 +1,5 @@
+// all time in stores in minutes
+
 declare type Theme = {
   mainColor: string;
   bgColor: string;
@@ -15,8 +17,6 @@ declare type Message = {
   action:
   | 'updateIcon'
   | 'saveTimeTyping'
-  | 'updateStreaks'
-  | 'checkLoginStatus'
   | 'loadInfo';
 };
 
@@ -27,20 +27,12 @@ declare type UpdateIconMessage = Message & {
 
 declare type TimeTyping = {
   date: Date;
-  duration: number;
+  minutes: number;
 };
 
-declare type SaveTypingTypingMessage = Message & {
+declare type SaveTimeTypingMessage = Message & {
   action: 'saveTimeTyping';
-  timeTypingSeconds: TimeTyping;
-};
-
-declare type CalculateStreaksMessage = Message & {
-  action: 'calculateStreaks';
-};
-
-declare type CheckLoginStatusMessage = Message & {
-  action: 'checkLoginStatus';
+  timeTyping: TimeTyping;
 };
 
 declare type LoadInfoMessage = Message & {
@@ -65,12 +57,15 @@ declare type MonkeyTypeStatsResponse = {
   }>;
 };
 
-declare type BrowserStorage = {
-  themes: Map<number, Theme>;
-  timeTypingHistoryMinutes: Array<TimeTyping>;
+declare type BrowserSessionStorage = {
+  themes: Array<[number, Theme]>;
+}
+
+declare type BrowserSyncStorage = {
+  timeTypingHistory: Array<TimeTyping>;
   // information needed by popup
-  timeTypingTodaySeconds: TimeTyping;
-  dailyGoalMinutes: {
+  timeTypingToday: TimeTyping;
+  dailyGoal: {
     sunday: number;
     monday: number;
     tuesday: number;

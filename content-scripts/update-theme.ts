@@ -5,11 +5,11 @@ const getTheme = (() => {
   // although the theme may change, this reference will not change
   const rootStyle = window.getComputedStyle(document.documentElement);
   return (): Theme => ({
-    mainColor: rootStyle.getPropertyValue('--main-color').substring(1),
-    bgColor: rootStyle.getPropertyValue('--bg-color').substring(1),
-    subColor: rootStyle.getPropertyValue('--sub-color').substring(1),
-    textColor: rootStyle.getPropertyValue('--text-color').substring(1),
-    errorColor: rootStyle.getPropertyValue('--error-color').substring(1)
+    mainColor: rootStyle.getPropertyValue('--main-color'),
+    bgColor: rootStyle.getPropertyValue('--bg-color'),
+    subColor: rootStyle.getPropertyValue('--sub-color'),
+    textColor: rootStyle.getPropertyValue('--text-color'),
+    errorColor: rootStyle.getPropertyValue('--error-color'),
   })
 })();
 

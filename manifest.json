@@ -30,7 +30,7 @@
     {
       "matches": ["https://monkeytype.com/"],
       "js": ["./out/count-typing.js"],
-      "run_at": "document_start"
+      "run_at": "document_end"
     },
     {
       "matches": ["https://monkeytype.com/*"],
