@@ -8,114 +8,64 @@
 </head>
 
 <body>
-  <div id="progress">
-    <h1>Progress</h1>
+  <h1>today's progress</h1>
+  <div id="progressBarContainer">
+    <progress id="progressBar" min="0" max="100" value="0"></progress>
+  </div>
+  <br>
+  <hr>
+  <h1>daily goals (min)</h1>
+  <form id="dailyGoalsForm">
     <div>
-      <div id="progressBar">
-        <label for="todaysProgress">Today's Progress</label>
-        <progress name="todaysProgress" max="100" value="21"></progress>
-      </div>
-      <div id="streaks">
-        <div>
-          <div class="streak">
-            <h3>Current</h3>
-            <img src="../assets/fire.svg" />
-          </div>
-          <p id="currentStreak">0</p>
-        </div>
-        <div>
-          <div class="streak">
-            <h3>Best</h3>
-            <img src="../assets/trophy.svg" />
-          </div>
-          <p id="bestStreak">0</p>
-        </div>
+      <label for="sunday">sun</label>
+      <!-- 1440 minutes in a day -->
+      <input id="sunday" class="dailyGoalInput" type="number" min="0" max="1440" value="0" />
+    </div>
+    <div>
+      <label for="monday">mon</label>
+      <input id="monday" class="dailyGoalInput" type="number" min="0" max="1440" value="0" />
+    </div>
+    <div>
+      <label for="tuesday">tue</label>
+      <input id="tuesday" class="dailyGoalInput" type="number" min="0" max="1440" value="0" />
+    </div>
+    <div>
+      <label for="wednesday">wed</label>
+      <input id="wednesday" class="dailyGoalInput" type="number" min="0" max="1440" value="0" />
+    </div>
+    <div>
+      <label for="thursday">thu</label>
+      <input id="thursday" class="dailyGoalInput" type="number" min="0" max="1440" value="0" />
+    </div>
+    <div>
+      <label for="friday">fri</label>
+      <input id="friday" class="dailyGoalInput" type="number" min="0" max="1440" value="0" />
+    </div>
+    <div>
+      <label for="saturday">sat</label>
+      <input id="saturday" class="dailyGoalInput" type="number" min="0" max="1440" value="0" />
+    </div>
+    <button id="saveDailyGoalsInput" class="hoverable" type="submit">save</button>
+  </form>
+  <hr>
+  <h1>settings</h1>
+  <form>
+    <h2>notifications</h2>
+    <div id="notifications">
+      <button id="never" class="notificationFrequencyButton hoverable">never</button>
+      <button id="quarterGoalCompletion" class="notificationFrequencyButton hoverable">quarter goal completion</button>
+      <button id="halfGoalCompletion" class="notificationFrequencyButton hoverable">half goal completion</button>
+      <button id="goalCompletion" class="notificationFrequencyButton hoverable">goal completion</button>
+    </div>
+    <h2>popup toggle command</h2>
+    <div>
+      <div id="popupToggleCommandContainer" >
+        <p id="popupToggleCommand" ></p>
+        <span>|</span>
+        <p><a id="editPopupToggleCommandLink" >edit</a></p>
       </div>
     </div>
-  </div>
-  <div id="goal">
-    <h1>Goal</h1>
-    <form>
-      <fieldset>
-        <legend>Daily Goal (minutes)</legend>
-        <div id="dayInputs">
-          <!-- 1440 minutes in a day -->
-          <div>
-            <label for="sundayInput">Sun</label>
-            <input id="sundayInput" class="dayInput" type="number" min="0" max="1440" value="0" />
-          </div>
-          <div>
-            <label for="mondayInput">Mon</label>
-            <input id="mondayInput" class="dayInput" type="number" min="0" max="1440" value="0" />
-          </div>
-          <div>
-            <label for="tuesdayInput">Tue</label>
-            <input id="tuesdayInput" class="dayInput" type="number" min="0" max="1440" value="0" />
-          </div>
-          <div>
-            <label for="wednesdayInput">Wed</label>
-            <input id="wednesdayInput" class="dayInput" type="number" min="0" max="1440" value="0" />
-          </div>
-          <div>
-            <label for="thursdayInput">Thu</label>
-            <input id="thursdayInput" class="dayInput" type="number" min="0" max="1440" value="0" />
-          </div>
-          <div>
-            <label for="fridayInput">Fri</label>
-            <input id="fridayInput" class="dayInput" type="number" min="0" max="1440" value="0" />
-          </div>
-          <div>
-            <label for="saturdayInput">Sat</label>
-            <input id="saturdayInput" class="dayInput" type="number" min="0" max="1440" value="0" />
-          </div>
-          <input id="saveGoalInput" type="submit" value="Save" />
-        </div>
-      </fieldset>
-    </form>
-  </div>
-  <div id="settings">
-    <h1>Settings</h1>
-    <form>
-      <fieldset>
-        <legend>Monkeytype Account</legend>
-        <!-- TODO must be one char, only lowercase/uppercase letters, underscores, and minuses -->
-        <div>
-          <label for="usernameInput">Username</label>
-          <input id="usernameInput" type="text" placeholder="mbappe" minlength="1" />
-        </div>
-        <div>
-          <label for="apeKeyInput">Ape Key</label>
-          <input id="apeKeyInput" type="text" placeholder="suiii" minlength="1" />
-        </div>
-        <button id="loadAccountInfo">Load from MonkeyType</button>
-        <input id="saveAccountInfo" type="submit" value="Save" />
-        <!-- TODO maybe leave this for MonkeyType to handle -->
-        <!-- <p id="remainingDailyUsernameEdits">30</p> -->
-      </fieldset>
-      <fieldset>
-        <legend>Notifications</legend>
-        <label for="never">Never</label>
-        <input id="never" class="notificationInput" name="notificationInput" type="radio" checked="true" />
-        <label for="quarter">Quarter Goal Completion</label>
-        <input id="quarter" class="notificationInput" name="notificationInput" type="radio" />
-        <label for="half">Half Goal Completion</label>
-        <input id="half" class="notificationInput" name="notificationInput" type="radio" />
-        <label for="complete">Goal Completion</label>
-        <input id="complete" class="notificationInput" name="notificationInput" type="radio" />
-      </fieldset>
-      <fieldset>
-        <legend>Extension Data</legend>
-        <button id="exportData">Export</button>
-        <div id="importDataZone">Drag and drop to import</div>
-      </fieldset>
-    </form>
-  </div>
-  <div id="FAQ">
-    <h1>FAQ</h1>
-    <h2>Do I need to connect to MonkeyType?</h2>
-    <p>hell nah; You don't have to, and it won't do much for you either. I just wanted to practice interacting with API
-      endpoints.</p>
-  </div>
+  </form>
 </body>
 
 </html>
