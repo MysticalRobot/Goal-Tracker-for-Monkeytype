@@ -7,9 +7,8 @@
 	"private": true,
 	"scripts": {
 		"lint": "web-ext lint",
-		"clean": "rm -rf ./out/*",
-		"build": "bun build.js",
-		"dev": "bun build.js && web-ext run --firefox-binary /Applications/LibreWolf.app/Contents/MacOS/librewolf",
-		"debug": "bun build.js && web-ext run --devtools --firefox-binary /Applications/LibreWolf.app/Contents/MacOS/librewolf"
+		"build": "rm -rf ./dist/* && bun build.js",
+		"dev": "bun build.js && web-ext run --devtools",
+		"zen": "bun build.js && web-ext run --devtools --firefox-binary /Applications/Zen.app/Contents/MacOS/zen"
 	}
 }

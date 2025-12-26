@@ -1,5 +1,5 @@
 try {
-  const outdir = './out';
+  const outdir = './dist';
   await Bun.build({
     entrypoints: ['./background-script.ts'],
     outdir,
@@ -13,7 +13,6 @@ try {
     entrypoints: [
       './content-scripts/update-theme.ts',
       './content-scripts/count-typing.ts',
-      './content-scripts/grab-info.ts'
     ],
     outdir,
     format: 'iife',
