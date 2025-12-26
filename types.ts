@@ -1,84 +1,50 @@
-// all time in stores in minutes
-
-declare type Theme = {
+export type Theme = {
   mainColor: string;
   bgColor: string;
   subColor: string;
+  subAltColor: string;
   textColor: string;
   errorColor: string;
 };
 
-declare type MessageResponse = {
+export type MessageResponse = {
   success: boolean;
-  message: string;
+  message: any;
 };
 
-declare type Message = {
-  action:
-  | 'updateIcon'
-  | 'saveTimeTyping'
-  | 'loadInfo';
+export type BackgroundScriptMessage = {
+  action: 'updateTheme' | 'saveTimeTyping';
 };
 
-declare type UpdateIconMessage = Message & {
-  action: 'updateIcon';
+export type UpdateThemeMessage = BackgroundScriptMessage & {
+  action: 'updateTheme';
   theme: Theme;
 };
 
-declare type TimeTyping = {
+export type SaveTimeTypingMessage = BackgroundScriptMessage & {
+  action: 'saveTimeTyping';
+  timeTypingMinutes: number;
+};
+
+export type BrowserSessionStorage = {
+  themes: Array<[number, Theme]>;
+};
+
+export const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+export type DailyGoalsMinutes = {
+  [Property in typeof dayNames[number]]: number;
+};
+
+export type TimeTyping = {
   date: Date;
   minutes: number;
-};
-
-declare type SaveTimeTypingMessage = Message & {
-  action: 'saveTimeTyping';
-  timeTyping: TimeTyping;
-};
-
-declare type LoadInfoMessage = Message & {
-  action: 'loadInfo';
-};
-
-declare type MonkeyTypeStatsRequest = {
-  username: string;
-  apeKey: string;
-};
-
-declare type MonkeyTypeStatsResponse = {
-  message: string;
-  data: Array<{
-    timestamp: 0;
-    testDuration: 1;
-    afkDuration: 0;
-    incompleteTestSeconds: 0;
-    uid: "^a$";
-    _id: "^a$";
-    restartCount: 0;
-  }>;
-};
-
-declare type BrowserSessionStorage = {
-  themes: Array<[number, Theme]>;
 }
 
-declare type BrowserSyncStorage = {
-  timeTypingHistory: Array<TimeTyping>;
+export const notificationFrequencies = ['never', 'quarterGoalCompletion', 'halfGoalCompletion', 'goalCompletion'] as const;
+export type NotificationFrequency = typeof notificationFrequencies[number];
+export type BrowserSyncStorage = {
   // information needed by popup
   timeTypingToday: TimeTyping;
-  dailyGoal: {
-    sunday: number;
-    monday: number;
-    tuesday: number;
-    wednesday: number;
-    thursday: number;
-    friday: number;
-    saturday: number;
-  };
-  username: string;
-  apeKey: string;
-  notificationFrequency:
-  | 'never'
-  | 'quarterGoalCompletion'
-  | 'halfGoalCompletion'
-  | 'goalCompletion';
+  dailyGoalsMinutes: DailyGoalsMinutes;
+  notificationFrequency: NotificationFrequency;
 };

@@ -1,44 +1,38 @@
-import { getIntervalManager } from "../utils";
+import { getIntervalManager } from '../utils';
+import type { SaveTimeTypingMessage, MessageResponse } from '../types';
 
 function createTimingCallbacks(): [() => void, () => void] {
-  let timeTypingSeconds: number = 0;
-  let lastTime: number | undefined = undefined;
+  let timeTypingMs: number = 0;
+  let prevTimeMs: number | undefined = undefined;
+  const oneSecondInMs = 1000;
+  const oneMinuteinMs = 60000;
   const recordTimeTyping = () => {
-    if (lastTime === undefined) {
-      lastTime = Date.now();
-    }
-    const currentTime = Date.now();
-    const oneSecondInMS = 1000;
-    const elapsedTimeSeconds = (currentTime - lastTime) / oneSecondInMS;
-    if (elapsedTimeSeconds > 1) {
-      console.debug(`ignoring afk period of ${elapsedTimeSeconds} seconds`);
-    } else {
-      timeTypingSeconds += elapsedTimeSeconds
-    }
-    lastTime = currentTime;
-  };
-  const saveTimeTyping = async () => {
-    if (timeTypingSeconds === 0) {
+    if (prevTimeMs === undefined) {
+      prevTimeMs = Date.now();
       return;
     }
-    // TODO maybe try to overestimate a little so that if people do 1 60s test,
-    // they actually hit their goal of 1 min
-    const timeTypingMinutes = timeTypingSeconds / 60;
+    const currentTimeMs = Date.now();
+    const elapsedTimeMs = currentTimeMs - prevTimeMs;
+    if (elapsedTimeMs <= oneSecondInMs) {
+      timeTypingMs += elapsedTimeMs
+    }
+    prevTimeMs = currentTimeMs;
+  };
+  const saveTimeTyping = async () => {
+    if (timeTypingMs === 0) {
+      return;
+    }
+    const errorMinutes = 0.001255;
+    const timeTypingMinutes = timeTypingMs / oneMinuteinMs + errorMinutes;
     const message: SaveTimeTypingMessage = {
       action: 'saveTimeTyping',
-      timeTyping: {
-        date: new Date(),
-        minutes: timeTypingMinutes
-      }
+      timeTypingMinutes
     };
-    console.debug(`sending SaveTimeTypingMessage to save ${timeTypingMinutes} minutes`);
     const response: MessageResponse = await browser.runtime.sendMessage(message);
-    if (response.success) {
-      console.debug(response.message);
-    } else {
+    if (!response.success) {
       console.error(response.message);
     }
-    timeTypingSeconds = 0;
+    timeTypingMs = 0;
   };
   return [recordTimeTyping, saveTimeTyping]
 }
@@ -49,9 +43,8 @@ if (wordsInput !== null) {
   wordsInput.addEventListener('keypress', recordTimeTyping);
   wordsInput.addEventListener('focusout', saveTimeTyping);
   // periodically save the time spent timing when the tab is active
-  const tenSecondsInMS = 10000;
-  const intervalManager
-    = getIntervalManager(saveTimeTyping, tenSecondsInMS, 'saveTimeTyping');
+  const periodMs = 1000;
+  const intervalManager = getIntervalManager(saveTimeTyping, periodMs);
   document.addEventListener('visibilitychange', intervalManager);
   intervalManager();
 }

@@ -1,51 +1,44 @@
-import icon from './assets/icon.ts';
+import {
+  getIconURI, getDailyGoalsMinutes, getNotificationFrequency, initialSyncStorage
+} from './utils';
+import type {
+  BrowserSessionStorage, BrowserSyncStorage, Theme, TimeTyping, UpdateThemeMessage,
+  SaveTimeTypingMessage, BackgroundScriptMessage, MessageResponse,
+} from './types';
 
-// modifies the icon svg with the theme's colors and creates a data URI to use it
-function getIconURI(theme: Theme): string {
-  const mainColor = /#e2b714/g;
-  const bgColor = /#323437/g;
-  const modifedIcon = icon
-    .replace(mainColor, theme.mainColor)
-    .replace(bgColor, theme.bgColor);
-  return 'data:image/svg+xml;base64,' + window.btoa(modifedIcon);
+async function updateTheme(theme: Theme, tabId: number) {
+  const themesKey: keyof BrowserSessionStorage = 'themes';
+  const storage = await browser.storage.session.get(themesKey);
+  const uninitializedThemes = !Object.hasOwn(storage, themesKey);
+  type Themes = Array<[number, Theme]> & BrowserSessionStorage[keyof BrowserSessionStorage];
+  const themes: Themes = uninitializedThemes ? [] : storage.themes;
+  const prevMappingIndex = themes.findIndex((theme) => theme[0] == tabId);
+  if (prevMappingIndex === -1) {
+    themes.push([tabId, theme]);
+  } else {
+    themes[prevMappingIndex] = [tabId, theme];
+  }
+  await browser.storage.session.set({ themes });
 }
 
-async function updateIconMessageHandler(message: UpdateIconMessage,
+async function updateThemeAndIcon(message: UpdateThemeMessage,
   sender: browser.runtime.MessageSender): Promise<MessageResponse> {
-  console.debug('recieved UpdateIconMessage');
   const theme = message.theme;
   const tab = sender.tab;
   // this case probably will not happen 🤓
   if (tab === undefined) {
-    return {
-      success: false,
-      message: 'UpdateIconMessage from closed tab ignored'
-    };
+    return { success: false, message: 'UpdateIconMessage from closed tab ignored' };
   }
   if (tab.id === undefined) {
-    return {
-      success: false,
-      message: 'failed to update icon, unable to get tab id'
-    };
+    return { success: false, message: 'failed to update theme, unable to get tab id' };
   }
-  const iconDataURI = getIconURI(theme);
-  const themesKey: keyof BrowserSessionStorage = 'themes';
   try {
-    const themesContainer = await browser.storage.session.get(themesKey);
-    const initializeThemes = !Object.hasOwn(themesContainer, themesKey);
-    const themes: Array<[number, Theme]> & BrowserSessionStorage[keyof BrowserSessionStorage]
-      = initializeThemes ? [] : themesContainer.themes;
-    const prevMappingIndex = themes.findIndex((theme) => theme[0] == tab.id);
-    if (prevMappingIndex === -1) {
-      themes.push([tab.id, theme]);
-    } else {
-      themes[prevMappingIndex] = [tab.id, theme];
-    }
-    await browser.storage.session.set({ themes });
+    await updateTheme(theme, tab.id);
+    const iconDataURI = getIconURI(theme);
     await browser.action.setIcon({ path: iconDataURI, tabId: tab.id });
-    return { success: true, message: 'icon updated' };
+    return { success: true, message: 'theme updated' };
   } catch (error) {
-    return { success: false, message: 'failed to update icon, ' + error };
+    return { success: false, message: 'failed to update theme, ' + error };
   }
 }
 
@@ -53,139 +46,114 @@ function yearMonthDay(date: Date): [number, number, number] {
   return [date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()];
 }
 
-function compareDates(date1: Date, date2: Date): [boolean, boolean] {
+function areSameDay(date1: Date, date2: Date): boolean {
   const [year1, month1, day1] = yearMonthDay(date1);
   const [year2, month2, day2] = yearMonthDay(date2);
-  const sameYearAndMonth = year1 == year2 && month1 == month2;
-  return [sameYearAndMonth && day1 == day2, sameYearAndMonth && day1 == day2 - 1];
+  return year1 == year2 && month1 == month2 && day1 == day2;
 }
 
-function minutesSinceStartOfDay(date: Date): number {
-  return date.getUTCHours() * 60
-    + date.getUTCMinutes()
-    + date.getUTCSeconds() / 60
-    + date.getUTCMilliseconds() / (60 * 1000);
-}
-
-async function saveTimeTypingMessageHandler(message: SaveTimeTypingMessage): Promise<MessageResponse> {
-  console.debug('recieved saveTimeTypingMessage');
-  const success = {
-    success: true,
-    message: `saved ${message.timeTyping.minutes} minutes of timeTyping`
-  };
-  let syncedChanges;
-  const storageSyncCallback = (changes: { [key: string]: any }) => (syncedChanges = changes);
-  browser.storage.sync.onChanged.addListener(storageSyncCallback);
-  const timeTypingTodayKey: keyof BrowserSyncStorage = 'timeTypingToday';
-  const timeTypingHistoryKey: keyof BrowserSyncStorage = 'timeTypingHistory';
-  try {
-    const timeTypingTodayContainer = await browser.storage.sync.get(timeTypingTodayKey);
-    // TODO should not have to do this bs if i initialize everything upon install
-    const initializeTimeTypingToday =
-      !Object.hasOwn(timeTypingTodayContainer, timeTypingTodayKey);
-    let timeTypingToday: TimeTyping & BrowserSyncStorage[keyof BrowserSyncStorage];
-    if (initializeTimeTypingToday) {
-      timeTypingToday = message.timeTyping;
-      await browser.storage.sync.set({ timeTypingToday });
-      browser.storage.sync.onChanged.removeListener(storageSyncCallback);
-      return success;
-    }
-    const timeTypingHistoryContainer = await browser.storage.sync.get(timeTypingHistoryKey);
-    const initializeTimeTypingHistory = !Object.hasOwn(timeTypingHistoryContainer, timeTypingHistoryKey);
-    const timeTypingHistory: Array<TimeTyping> & BrowserSyncStorage[keyof BrowserSyncStorage]
-      = initializeTimeTypingHistory ? [] : timeTypingHistoryContainer.timeTypingHistory;
-    const [sameDay, oneDayApart] = compareDates(new Date(timeTypingTodayContainer.timeTypingToday.date),
-      message.timeTyping.date);
-    const timeTypingYesterdayMinutes = (minutesSinceStartOfDay(message.timeTyping.date) - message.timeTyping.minutes) * -1;
-    if (sameDay) {
-      timeTypingToday = timeTypingTodayContainer.timeTypingToday;
-      timeTypingToday.minutes += message.timeTyping.minutes;
-    } else if (oneDayApart && timeTypingYesterdayMinutes > 0) {
-      timeTypingToday = {
-        date: message.timeTyping.date,
-        minutes: message.timeTyping.minutes - timeTypingYesterdayMinutes
-      };
-      const timeTypingYesterday: TimeTyping = {
-        date: timeTypingTodayContainer.timeTypingToday.date,
-        minutes: timeTypingTodayContainer.timeTypingToday.minutes
-          + timeTypingYesterdayMinutes
-      };
-      timeTypingHistory.push(timeTypingYesterday);
-    } else {
-      timeTypingToday = message.timeTyping;
-      const timeTypingYesterday: TimeTyping = {
-        date: timeTypingTodayContainer.timeTypingToday.date,
-        minutes: timeTypingTodayContainer.timeTypingToday.minutes
-      };
-      timeTypingHistory.push(timeTypingYesterday);
-    }
-    console.log(JSON.stringify(timeTypingToday));
-    await browser.storage.sync.set({ timeTypingToday });
-    await browser.storage.sync.set({ timeTypingHistory });
-    browser.storage.sync.onChanged.removeListener(storageSyncCallback);
-    return success;
-  } catch (error) {
-    browser.storage.sync.onChanged.removeListener(storageSyncCallback);
-    return {
-      success: false, message: 'failed to save timeTyping, ' + error
-    }
-  }
-}
-
-// respond to requests from the content script to set the icon
-browser.runtime.onMessage.addListener((message: Message,
-  sender: browser.runtime.MessageSender): Promise<MessageResponse> => {
-  // TODO fill in with the other functions
-  switch (message.action) {
-    case 'updateIcon':
-      return updateIconMessageHandler(message as UpdateIconMessage, sender);
-    case 'saveTimeTyping':
-      return saveTimeTypingMessageHandler(message as SaveTimeTypingMessage);
-    case 'loadInfo':
-      break;
-  }
-  return Promise.resolve({
-    success: false,
-    message: 'we gotta go bald; unable to handle message, ' + message
+async function sendNotification(title: string, message: string): Promise<void> {
+  const notificationId = await browser.notifications.create({
+    type: 'basic',
+    iconUrl: browser.runtime.getURL('./icon.svg'),
+    title,
+    message,
   });
+  await browser.notifications.clear(notificationId);
+}
+
+async function notifyUser(prevTimeTypingToday: TimeTyping, currTimeTypingToday: TimeTyping): Promise<void> {
+  const notificationFrequency = await getNotificationFrequency();
+  if (notificationFrequency === 'never') {
+    return;
+  }
+  const dailyGoalsMinutes = await getDailyGoalsMinutes();
+  const dailyGoalsMinutesValues = Object.values(dailyGoalsMinutes);
+  const dayOfWeek = currTimeTypingToday.date.getUTCDay();
+  const dailyGoalMinutes = dailyGoalsMinutesValues.at(dayOfWeek);
+  if (dailyGoalMinutes === undefined) {
+    throw new Error(`daily goal for day ${dayOfWeek} is undefined`);
+  }
+  if (dailyGoalMinutes === 0) {
+    return;
+  }
+  const prevProgressRatio = (prevTimeTypingToday.minutes / dailyGoalMinutes);
+  const currProgressRatio = (currTimeTypingToday.minutes / dailyGoalMinutes);
+  if (notificationFrequency === 'quarterGoalCompletion'
+    && prevProgressRatio < 0.25 && 0.25 <= currProgressRatio) {
+    await sendNotification('one quarter goal complete', 'the hardest part is over, keep it up!');
+  } else if (notificationFrequency === 'quarterGoalCompletion'
+    && prevProgressRatio < 0.75 && 0.75 <= currProgressRatio) {
+    await sendNotification('three quarters goal complete', 'can you finish the job?');
+  } else if ((notificationFrequency === 'quarterGoalCompletion'
+    || notificationFrequency === 'halfGoalCompletion')
+    && prevProgressRatio < 0.5 && 0.5 <= currProgressRatio) {
+    await sendNotification('half goal complete', 'round 2, fight!');
+  } else if (prevProgressRatio < 1.0 && 1.0 <= currProgressRatio) {
+    await sendNotification('goal complete', 'absolute cinema');
+  }
+}
+
+async function saveTimeTyping(timeTypingMinutes: number): Promise<[TimeTyping, TimeTyping]> {
+  const timeTypingTodayKey: keyof BrowserSyncStorage = 'timeTypingToday';
+  const storage = await browser.storage.sync.get(timeTypingTodayKey);
+  const uninitializedTimeTypingToday = !Object.hasOwn(storage, timeTypingTodayKey);
+  let currTimeTypingToday: TimeTyping;
+  let prevTimeTypingToday: TimeTyping;
+  const today = new Date();
+  if (uninitializedTimeTypingToday
+    || !areSameDay(new Date(storage.timeTypingToday.date), today)) {
+    currTimeTypingToday = {
+      date: today,
+      minutes: timeTypingMinutes
+    };
+    prevTimeTypingToday = currTimeTypingToday;
+  } else {
+    currTimeTypingToday = storage.timeTypingToday;
+    currTimeTypingToday.date = new Date(currTimeTypingToday.date);
+    prevTimeTypingToday = { ...storage.timeTypingToday };
+    currTimeTypingToday.minutes += timeTypingMinutes;
+  }
+  await browser.storage.sync.set({ timeTypingToday: currTimeTypingToday });
+  return [prevTimeTypingToday, currTimeTypingToday];
+}
+
+async function saveTimeTypingAndNotifyUser(message: SaveTimeTypingMessage): Promise<MessageResponse> {
+  try {
+    const [prevTimeTypingToday, currTimeTypingToday] = await saveTimeTyping(message.timeTypingMinutes);
+    await notifyUser(prevTimeTypingToday, currTimeTypingToday);
+    return {
+      success: true,
+      message: `saved ${message.timeTypingMinutes} minutes of timeTyping`
+    };
+  } catch (error) {
+    return { success: false, message: 'failed to save timeTyping or notify user, ' + error }
+  }
+}
+
+// respond to messages from the content scripts
+browser.runtime.onMessage.addListener((message: BackgroundScriptMessage,
+  sender): Promise<MessageResponse> => {
+  switch (message.action) {
+    case 'updateTheme':
+      return updateThemeAndIcon(message as UpdateThemeMessage, sender);
+    case 'saveTimeTyping':
+      return saveTimeTypingAndNotifyUser(message as SaveTimeTypingMessage);
+    default:
+      return Promise.resolve({
+        success: false,
+        message: 'we gotta go bald; unable to handle message, ' + message
+      });
+  }
 });
 
 browser.runtime.onInstalled.addListener(async (details) => {
   if (details.reason !== 'install') {
     return;
   }
-  const initialSyncStorage: BrowserSyncStorage = {
-    timeTypingHistory: [],
-    timeTypingToday: { date: new Date(), minutes: 0 },
-    dailyGoal: {
-      sunday: 0,
-      monday: 0,
-      tuesday: 0,
-      wednesday: 0,
-      thursday: 0,
-      friday: 0,
-      saturday: 0
-    },
-    username: '',
-    apeKey: '',
-    notificationFrequency: 'never'
-  };
   try {
     await browser.storage.sync.set(initialSyncStorage);
   } catch (error) {
-    console.error('unable to initialize sync storage ', error);
+    console.error('unable to initialize browser sync storage ', error);
   }
 });
-
-// TODO create custom event(s) and listeners that fire and notify 
-// respectively when the user hits certain milestones of their goal 
-
-// const title = browser.i18n.getMessage('notificationTitle');
-// const message = browser.i18n.getMessage('notificationContent', placeholder);
-// browser.notifications.create({
-//   type: 'basic',
-//   iconUrl: browser.extension.getURL("icons/link-48.png"),
-//   title: 'blah blah',
-//   message: 'yass bitch'
-// });
-//

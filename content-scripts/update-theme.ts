@@ -1,4 +1,5 @@
 import { getIntervalManager } from '../utils.ts';
+import type { Theme, UpdateThemeMessage, MessageResponse } from '../types';
 
 // gets the colors that the current Monkeytype tab is using
 const getTheme = (() => {
@@ -8,29 +9,27 @@ const getTheme = (() => {
     mainColor: rootStyle.getPropertyValue('--main-color'),
     bgColor: rootStyle.getPropertyValue('--bg-color'),
     subColor: rootStyle.getPropertyValue('--sub-color'),
+    subAltColor: rootStyle.getPropertyValue('--sub-alt-color'),
     textColor: rootStyle.getPropertyValue('--text-color'),
     errorColor: rootStyle.getPropertyValue('--error-color'),
   })
 })();
 
-// sends a request to the bg script to update the icon 
-const updateIcon = (() => {
+// sends a request to the bg script to update the Theme
+const updateTheme = (() => {
   let theme: Theme | undefined = undefined;
   return async () => {
     const currentTheme = getTheme();
-    if (theme !== undefined && currentTheme.bgColor === theme.bgColor &&
-      currentTheme.mainColor === theme.mainColor) {
+    if (theme !== undefined && currentTheme.bgColor === theme.bgColor 
+        && currentTheme.mainColor === theme.mainColor) {
       return;
     }
     theme = currentTheme;
-    console.debug('sending UpdateIconMessage');
-    const message: UpdateIconMessage = { action: 'updateIcon', theme };
+    const message: UpdateThemeMessage = { action: 'updateTheme', theme };
     try {
       const response: MessageResponse = await browser.runtime.sendMessage(message);
-      if (response.success) {
-        console.debug(response.message);
-      } else {
-        throw new Error(response.message);
+      if (!response.success) {
+        console.error(response.message);
       }
     } catch (error) {
       console.error(error);
@@ -38,12 +37,13 @@ const updateIcon = (() => {
   }
 })();
 
-// periodically updates the icon as needed while the current tab is active 
-const oneSecond = 1000;
-const intervalManager = getIntervalManager(updateIcon, oneSecond, 'updateIcon');
+// while the tab is active, periodically update the theme to account for custom theme selection 
+const periodMs = 1000;
+const intervalManager = getIntervalManager(updateTheme, periodMs);
 document.addEventListener('visibilitychange', intervalManager);
 intervalManager();
 
-// update the icon upon the addition or removal of stylesheets from the document's body 
-const observer = new MutationObserver(updateIcon);
-observer.observe(document.body, { childList: true });
+// update the theme upon the selection of a preset theme 
+const styleSheetChangeObserver = new MutationObserver(updateTheme);
+styleSheetChangeObserver.observe(document.body, { childList: true });
+
