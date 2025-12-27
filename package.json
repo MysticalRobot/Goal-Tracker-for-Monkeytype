@@ -6,7 +6,7 @@
 	},
 	"private": true,
 	"scripts": {
-		"build": "bun build.js && web-ext build",
+		"build": "bun build.js && web-ext build --overwrite-dest",
 		"dev": "bun build.js && web-ext run --devtools",
 		"zen": "bun build.js && web-ext run --devtools --firefox-binary /Applications/Zen.app/Contents/MacOS/zen"
 	}
