@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Monkeytype Goal Tracker",
+  "name": "Goal Tracker for Monkeytype",
   "version": "1.0",
-  "description": "A tool that helps users reach their daily Monkeytype typing goals.",
-  "homepage_url": "https://github.com/mysticalrobot/monkeytype-goal-tracker",
+  "description": "A tool that helps users reach their daily typing goals on Monkeytype.",
+  "homepage_url": "https://github.com/MysticalRobot/Goal-Tracker-for-Monkeytype",
   "browser_specific_settings": {
     "gecko": {
       "id": "{f3c0eabd-523c-4704-8601-9ac925c8613c}"

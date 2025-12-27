@@ -1,13 +1,12 @@
 {
-	"name": "mt-tracker",
+	"name": "Goal-Tracker-for-Monkeytype",
 	"devDependencies": {
 		"@types/firefox-webext-browser": "^120.0.4",
 		"typescript": "^5.9.2"
 	},
 	"private": true,
 	"scripts": {
-		"lint": "web-ext lint",
-		"build": "rm -rf ./dist/* && bun build.js",
+		"build": "bun build.js && web-ext build",
 		"dev": "bun build.js && web-ext run --devtools",
 		"zen": "bun build.js && web-ext run --devtools --firefox-binary /Applications/Zen.app/Contents/MacOS/zen"
 	}
